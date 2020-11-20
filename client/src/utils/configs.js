@@ -1,1 +1,1 @@
-export const socket = new WebSocket('ws://localhost:5001');
+export const socket = new WebSocket('ws://d3f714649b74.ngrok.io');

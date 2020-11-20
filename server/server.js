@@ -15,18 +15,24 @@ app.use(bodyParser.json())
 
 
 const WebSocket = require('ws');
-const { SET_USERID, SEND_MESSAGE, BROADCAST, GET_CONNECTED_USERS } = require('./utils/constants');
+const { SET_USERID, SEND_MESSAGE, BROADCAST, GET_CONNECTED_USERS, SUBSCRIBE_TO_USERS, UN_SUBSCRIBE_TO_USERS } = require('./utils/constants');
 const { client } = require('websocket');
+const Subscription = require('./utils/subscription');
+const { error } = require('console');
 // const { connection } = require('mongoose');
 // const server = http.createServer(app);
 
 const ws = new WebSocket.Server({ port: 5001 });
 
+let userSubscription = new Subscription();
+
+
+
 
 const sendMessage = (message) => {
     ws.clients.forEach(client => {
         if (client.id == message.receiverId) {
-            client.send(JSON.stringify(message.data));
+            client.send(JSON.stringify(message.payload));
         }
     })
 }
@@ -34,7 +40,7 @@ const sendMessage = (message) => {
 const broadCastMessage = (wsConnection, message) => {
     ws.clients.forEach(client => {
         if (wsConnection != client) {
-            client.send(JSON.stringify(message.data));
+            client.send(JSON.stringify(message));
         }
     })
 }
@@ -50,6 +56,17 @@ const getConnectedUsers = (wsConnection, message) => {
 }
 
 
+
+const createUserEventListener = (wsConnection, message) => {
+    userSubscription.subscribe(() => getConnectedUsers(wsConnection, { type: GET_CONNECTED_USERS }));
+}
+
+
+const unSubscribeEventListener = (wsConnection) => {
+    userSubscription.unsubscribe(() => getConnectedUsers(wsConnection, { type: UN_SUBSCRIBE_TO_USERS }));
+}
+
+
 ws.on('connection', function connection(wsConnection) {
 
 
@@ -61,33 +78,32 @@ ws.on('connection', function connection(wsConnection) {
         console.log(`Server received: ${data.type}`);
 
         if (data.type === SET_USERID) {
-            wsConnection.id = data.userId;
+
+            wsConnection.id = data.payload;
+            console.log(`Server received: ${data.payload}`);
+            userSubscription.fire()
         } else if (data.type === SEND_MESSAGE) {
             sendMessage(data)
         } else if (data.type === BROADCAST) {
             broadCastMessage(wsConnection, data)
         } else if (data.type === GET_CONNECTED_USERS) {
             getConnectedUsers(wsConnection, data)
+        } else if (data.type === SUBSCRIBE_TO_USERS) {
+            createUserEventListener(wsConnection, data);
+        } else if (data.type === UN_SUBSCRIBE_TO_USERS) {
+            unSubscribeEventListener(wsConnection);
+        } else {
+            broadCastMessage(wsConnection, data)
         }
-
-        // if (message.type == SET_USERID) {
-        //     wsConnection.id = message.message;
-        // }
+    });
 
 
-        // //Broadcasting the message
-        // ws.clients.forEach(client => {
-        //     if (client != wsConnection) {
-        //         console.log(client.id)
-        //         // console.log(client._socket)
-        //         // console.log(client._socket.remoteAddress)
-        //         // console.log(client)
+    wsConnection.on('close', disconnection => {
+        unSubscribeEventListener(wsConnection)
+    });
 
-        //         // console.log(client);
-        //         // wsConnection.send(client)
-        //         // client.send(`You sent: ${message}`)
-        //     }
-        // })
+    wsConnection.on('error', error => {
+        unSubscribeEventListener(wsConnection)
     })
 
 

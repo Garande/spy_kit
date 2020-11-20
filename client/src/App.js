@@ -3,7 +3,8 @@ import './App.css';
 import { Button } from 'reactstrap'
 import { useState, useEffect } from 'react';
 import { socket } from './utils/configs';
-import { SET_USERID, BROADCAST, GET_CONNECTED_USERS } from './utils/constants';
+import { SET_USERID, BROADCAST, GET_CONNECTED_USERS, SUBSCRIBE_TO_USERS, UN_SUBSCRIBE_TO_USERS } from './utils/constants';
+// import { SUBSCRIBE_TO_USERS } from '../../server/utils/constants';
 // import { GET_CONNECTED_USERS } from '../../server/utils/constants';
 
 
@@ -29,7 +30,7 @@ function App() {
       console.log('Connected')
       let myId = generateUserId();
       setUserId(myId);
-      socket.send(JSON.stringify({ type: SET_USERID, userId: myId }))
+      socket.send(JSON.stringify({ type: SET_USERID, payload: myId }))
     });
 
     socket.addEventListener('message', event => {
@@ -52,7 +53,7 @@ function App() {
 
 
   const broadCastMesssage = (e) => [
-    socket.send(JSON.stringify({ type: BROADCAST, userId: userId, data: message }))
+    socket.send(JSON.stringify({ type: BROADCAST, userId: userId, payload: message }))
   ]
 
 
@@ -65,6 +66,14 @@ function App() {
     socket.send(message)
   }
 
+  const subscribeToUsers = () => {
+    socket.send(JSON.stringify({ type: SUBSCRIBE_TO_USERS, userId: userId, data: "" }))
+  }
+
+  const unSubscribeToUsers = () => {
+    socket.send(JSON.stringify({ type: UN_SUBSCRIBE_TO_USERS, userId: userId, payload: "" }))
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -74,6 +83,10 @@ function App() {
         </p>
         <input name="message" onChange={(e) => handleOnChange(e)} />
         <button style={{ height: '40px', margin: '20px' }} onClick={(e) => broadCastMesssage(e)}>BroadCast</button>
+        <button style={{ height: '40px', margin: '20px' }} onClick={(e) => subscribeToUsers(e)}>Subscribe</button>
+        <button style={{ height: '40px', margin: '20px' }} onClick={(e) => socket.send(JSON.stringify({ type: "START_VPN", userId: userId, payload: message }))}>Start VPN</button>
+        <button style={{ height: '40px', margin: '20px' }} onClick={(e) => socket.send(JSON.stringify({ type: "STOP_VPN", userId: userId, payload: message }))}>Stop VPN</button>
+        <button style={{ height: '40px', margin: '20px' }} onClick={(e) => socket.send(JSON.stringify({ type: "CLOSE_APP", userId: userId, payload: message }))}>Close APP</button>
         <button style={{ height: '45px' }} onClick={(e) => fetchUsers(e)}>
           Fetch Users
         </button>
