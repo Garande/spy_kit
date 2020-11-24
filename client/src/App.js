@@ -86,7 +86,7 @@ function App() {
         <button style={{ height: '40px', margin: '20px' }} onClick={(e) => subscribeToUsers(e)}>Subscribe</button>
         <button style={{ height: '40px', margin: '20px' }} onClick={(e) => socket.send(JSON.stringify({ type: "START_VPN", userId: userId, payload: message }))}>Start VPN</button>
         <button style={{ height: '40px', margin: '20px' }} onClick={(e) => socket.send(JSON.stringify({ type: "STOP_VPN", userId: userId, payload: message }))}>Stop VPN</button>
-        <button style={{ height: '40px', margin: '20px' }} onClick={(e) => socket.send(JSON.stringify({ type: "CLOSE_APP", userId: userId, payload: message }))}>Close APP</button>
+        <button style={{ height: '40px', margin: '20px' }} onClick={(e) => socket.send(JSON.stringify({ type: "GET_DEVICE_INFO", userId: userId, payload: message }))}>Device Info</button>
         <button style={{ height: '45px' }} onClick={(e) => fetchUsers(e)}>
           Fetch Users
         </button>
